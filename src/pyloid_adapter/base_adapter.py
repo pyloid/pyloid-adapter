@@ -8,9 +8,10 @@ containing shared functionality and interfaces.
 import threading
 from abc import ABC, abstractmethod
 from typing import Callable, Optional, TYPE_CHECKING, Any
-
+import os
+import sys
 from .context import PyloidContext
-from .utils import get_free_port
+from .utils import get_free_port, is_production
 
 if TYPE_CHECKING:
     from pyloid import Pyloid
@@ -57,7 +58,7 @@ class BaseAdapter(ABC):
         self.pyloid: Optional["Pyloid"] = None
         self.thread: Optional[threading.Thread] = None
 
-    def get_pyloid_context(self, window_id: Optional[str] = None) -> PyloidContext:
+    def get_context(self, window_id: Optional[str] = None) -> PyloidContext:
         """
         Create PyloidContext from window ID.
 
@@ -132,6 +133,12 @@ class BaseAdapter(ABC):
         - Server logs and output will be printed to console
         - Use this for development; consider production servers for deployment
         """
+        
+        if is_production():
+            log_dir = sys._MEIPASS
+            sys.stdout = open(os.path.join(log_dir, "stdout.log"), "w")
+            sys.stderr = open(os.path.join(log_dir, "stderr.log"), "w")
+
         self.thread = threading.Thread(target=self.start, daemon=True)
         self.thread.start()
 

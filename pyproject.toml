@@ -1,6 +1,6 @@
 [project]
 name = "pyloid-adapter"
-version = "0.1.3"
+version = "0.2.1"
 description = "PyLoid Adapter"
 readme = "README.md"
 authors = [
@@ -18,7 +18,7 @@ dev = [
     "fastapi>=0.116.2",
     "flask>=3.1.2",
     "flask-cors>=6.0.1",
-    "pyloid>=0.26.1",
+    "pyloid>=0.26.3",
     "uvicorn>=0.36.0",
 ]
 
