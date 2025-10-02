@@ -6,7 +6,7 @@ containing shared functionality and interfaces.
 """
 
 import threading
-from abc import ABC, abstractmethod
+from abc import ABC
 from typing import Callable, Optional, TYPE_CHECKING, Any
 import os
 import sys
@@ -39,26 +39,28 @@ class BaseAdapter(ABC):
         The Pyloid application instance. Must be set before use.
     """
 
-    def __init__(self, app: Any, start_function: Callable[[Any, str, int], None]):
+    def __init__(self, start_function: Callable[[Any, str, int], None], setup_cors_function: Callable[[], None]):
         """
         Initialize the base adapter.
 
         Parameters
         ----------
-        app : Any
-            The web framework application instance.
         start_function : Callable[[Any, str, int], None]
             Function that starts the server.
+        setup_cors_function : Callable[[], None]
+            Function that sets up CORS configuration for the web framework.
         """
-        self.app: Any = app
         self.host: str = "127.0.0.1"
         self.port: int = get_free_port()
         self.url: str = f"http://{self.host}:{self.port}"
-        self.start_function: Callable[[Any, str, int], None] = start_function
+        
         self.pyloid: Optional["Pyloid"] = None
         self.thread: Optional[threading.Thread] = None
+        
+        self.start_function: Callable[[Any, str, int], None] = start_function
+        setup_cors_function()
 
-    def get_context(self, window_id: Optional[str] = None) -> PyloidContext:
+    def get_context_by_window_id(self, window_id: Optional[str] = None) -> PyloidContext:
         """
         Create PyloidContext from window ID.
 
@@ -117,7 +119,7 @@ class BaseAdapter(ABC):
         This method will block if using a synchronous start function.
         For non-blocking operation, use the run() method instead.
         """
-        self.start_function(self.app, self.host, self.port)
+        self.start_function(self.host, self.port)
 
     def run(self) -> None:
         """
@@ -142,7 +144,6 @@ class BaseAdapter(ABC):
         self.thread = threading.Thread(target=self.start, daemon=True)
         self.thread.start()
 
-    @abstractmethod
     def setup_cors(self) -> None:
         """
         Set up CORS configuration for the web framework.
@@ -150,4 +151,11 @@ class BaseAdapter(ABC):
         This method should be implemented by subclasses to configure
         CORS settings appropriate for their web framework.
         """
-        pass
+        self.setup_cors_function()
+
+    # @abstractmethod
+    # def setup_cors(self) -> None:
+    #     """
+    #     Set up CORS configuration for the web framework.
+    #     """
+    #     pass

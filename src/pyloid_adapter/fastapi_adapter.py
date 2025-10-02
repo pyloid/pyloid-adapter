@@ -1,5 +1,4 @@
 from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
 from .base_adapter import BaseAdapter
 from .context import PyloidContext
 from typing import Callable
@@ -18,21 +17,18 @@ class FastAPIAdapter(BaseAdapter):
     The adapter supports FastAPI's dependency injection system for context injection.
     """
 
-    def __init__(self, app: FastAPI, start_function: Callable[[FastAPI, str, int], None]):
+    def __init__(self, start: Callable[[FastAPI, str, int], None], setup_cors: Callable[[], None]):
         """
         Initialize the FastAPI adapter.
 
         Parameters
         ----------
-        app : FastAPI
-            The FastAPI application instance to integrate with.
-        start_function : Callable[[FastAPI, str, int], None]
+        start : Callable[[FastAPI, str, int], None]
             Function that starts the server. Should handle app, host, port parameters.
+        setup_cors : Callable[[], None]
+            Function that sets up CORS configuration for the web framework.
         """
-        super().__init__(app, start_function)
-        
-        self.app: FastAPI = app
-        self.setup_cors()
+        super().__init__(start, setup_cors)
         
     def get_context(self, request: Request) -> PyloidContext:
         """
@@ -52,14 +48,4 @@ class FastAPIAdapter(BaseAdapter):
             Context object containing Pyloid app and window instances.
         """
         window_id = request.headers.get("X-Pyloid-Window-Id")
-        return super().get_context(window_id)
-
-    def setup_cors(self) -> None:
-        self.app.add_middleware(
-            CORSMiddleware,
-            allow_origins=["*"],  # Allow all origins by default
-            allow_credentials=True,
-            allow_methods=["*"],  # Allow all methods
-            allow_headers=["*"],  # Allow all headers
-        )
-        
+        return super().get_context_by_window_id(window_id)
