@@ -48,4 +48,4 @@ class FastAPIAdapter(BaseAdapter):
             Context object containing Pyloid app and window instances.
         """
         window_id = request.headers.get("X-Pyloid-Window-Id")
-        return super().get_context_by_window_id(window_id)
+        return super().get_context(window_id)

@@ -7,7 +7,7 @@ containing shared functionality and interfaces.
 
 import threading
 from abc import ABC
-from typing import Callable, Optional, TYPE_CHECKING, Any
+from typing import Callable, Optional, TYPE_CHECKING
 import os
 import sys
 from .context import PyloidContext
@@ -18,11 +18,11 @@ if TYPE_CHECKING:
     from pyloid.browser_window import BrowserWindow
 
 
-class BaseAdapter(ABC):
+class BaseAdapter():
     """
     Base adapter class for Pyloid application integration.
 
-    This abstract class provides common functionality for integrating Pyloid
+    This class provides common functionality for integrating Pyloid
     applications with web servers. It handles server lifecycle management,
     context creation, and provides a consistent interface across different
     web frameworks.
@@ -39,15 +39,16 @@ class BaseAdapter(ABC):
         The Pyloid application instance. Must be set before use.
     """
 
-    def __init__(self, start_function: Callable[[Any, str, int], None], setup_cors_function: Callable[[], None]):
+    def __init__(self, start: Callable[[str, int], None], setup_cors: Callable[[], None]):
         """
         Initialize the base adapter.
 
         Parameters
         ----------
-        start_function : Callable[[Any, str, int], None]
-            Function that starts the server.
-        setup_cors_function : Callable[[], None]
+        start : Callable[[str, int], None]
+            Function that starts the server. this function can handle host and port parameters.
+            
+        setup_cors : Callable[[], None]
             Function that sets up CORS configuration for the web framework.
         """
         self.host: str = "127.0.0.1"
@@ -57,10 +58,31 @@ class BaseAdapter(ABC):
         self.pyloid: Optional["Pyloid"] = None
         self.thread: Optional[threading.Thread] = None
         
-        self.start_function: Callable[[Any, str, int], None] = start_function
-        setup_cors_function()
+        self.start_server: Callable[[str, int], None] = start
+        setup_cors()
+        
+    def is_pyloid(self, window_id: str) -> bool:
+        """
+        Check this request is from Pyloid frontend fetch (pyloid-js SDK's fetch method).
+        
+        Parameters
+        ----------
+        window_id : str
+            The browser window ID to check.
+            
+        Returns
+        -------
+        bool
+            True if the request is from Pyloid, False otherwise.
+        """
+        window = self.pyloid.get_window_by_id(window_id)
+        
+        if window is None:
+            return False
+        
+        return True
 
-    def get_context_by_window_id(self, window_id: Optional[str] = None) -> PyloidContext:
+    def get_context(self, window_id: Optional[str] = None) -> PyloidContext:
         """
         Create PyloidContext from window ID.
 
@@ -107,7 +129,7 @@ class BaseAdapter(ABC):
 
         return PyloidContext(pyloid=self.pyloid, window=window)
 
-    def start(self) -> None:
+    def _start(self) -> None:
         """
         Start the server.
 
@@ -119,7 +141,7 @@ class BaseAdapter(ABC):
         This method will block if using a synchronous start function.
         For non-blocking operation, use the run() method instead.
         """
-        self.start_function(self.host, self.port)
+        self.start_server(self.host, self.port)
 
     def run(self) -> None:
         """
@@ -128,12 +150,6 @@ class BaseAdapter(ABC):
         This method creates a daemon thread that runs the server startup process.
         The server will run in the background, allowing the main application to
         continue executing.
-
-        Notes
-        -----
-        - The thread is set as daemon=True, so it won't prevent program exit
-        - Server logs and output will be printed to console
-        - Use this for development; consider production servers for deployment
         """
         
         if is_production():
@@ -141,21 +157,5 @@ class BaseAdapter(ABC):
             sys.stdout = open(os.path.join(log_dir, "stdout.log"), "w")
             sys.stderr = open(os.path.join(log_dir, "stderr.log"), "w")
 
-        self.thread = threading.Thread(target=self.start, daemon=True)
+        self.thread = threading.Thread(target=self._start, daemon=True)
         self.thread.start()
-
-    def setup_cors(self) -> None:
-        """
-        Set up CORS configuration for the web framework.
-
-        This method should be implemented by subclasses to configure
-        CORS settings appropriate for their web framework.
-        """
-        self.setup_cors_function()
-
-    # @abstractmethod
-    # def setup_cors(self) -> None:
-    #     """
-    #     Set up CORS configuration for the web framework.
-    #     """
-    #     pass
