@@ -153,7 +153,7 @@ class BaseAdapter():
         """
         
         if is_production():
-            log_dir = sys._MEIPASS
+            log_dir = self.pyloid.user_data_dir()
             sys.stdout = open(os.path.join(log_dir, "stdout.log"), "w")
             sys.stderr = open(os.path.join(log_dir, "stderr.log"), "w")
 

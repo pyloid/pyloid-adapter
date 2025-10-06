@@ -1,7 +1,7 @@
 [project]
 name = "pyloid-adapter"
-version = "0.3.0"
-description = "PyLoid Adapter"
+version = "0.3.1"
+description = "Pyloid Adapter"
 readme = "README.md"
 authors = [
     { name = "hyeonho cho", email = "111675679+aesthetics-of-record@users.noreply.github.com" }
