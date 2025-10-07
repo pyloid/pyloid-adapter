@@ -6,7 +6,6 @@ containing shared functionality and interfaces.
 """
 
 import threading
-from abc import ABC
 from typing import Callable, Optional, TYPE_CHECKING
 import os
 import sys
