@@ -154,6 +154,10 @@ class BaseAdapter():
         
         if is_production():
             log_dir = self.pyloid.user_data_dir()
+            
+            if not os.path.exists(log_dir):
+                os.makedirs(log_dir)
+                
             sys.stdout = open(os.path.join(log_dir, "stdout.log"), "w")
             sys.stderr = open(os.path.join(log_dir, "stderr.log"), "w")
 
